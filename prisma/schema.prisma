@@ -1,0 +1,129 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  username String @unique @db.VarChar(100)
+  email    String @unique @db.VarChar(100)
+  password String @db.VarChar(100)
+  address  String @db.VarChar(100)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  Order      Order[]
+  Review     Review[]
+
+  @@map("users")
+}
+
+model Product {
+  id          Int         @id @default(autoincrement())
+  name        String      @unique @db.VarChar(100)
+  description String      @db.VarChar(500)
+  price       Float
+  stock       Int
+  categoryId  Int
+  category    Category    @relation(fields: [categoryId], references: [id])
+  created_at  DateTime    @default(now())
+  updated_at  DateTime    @updatedAt
+  OrderItem   OrderItem[]
+  Review      Review[]
+
+  @@map("products")
+}
+
+model Category {
+  id   Int    @id @default(autoincrement())
+  name String @unique @db.VarChar(100)
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  Product    Product[]
+
+  @@map("categories")
+}
+
+model Order {
+  id        Int         @id @default(autoincrement())
+  userId    Int
+  date      DateTime    @default(now())
+  status    String
+  user      User        @relation(fields: [userId], references: [id])
+  OrderItem OrderItem[]
+  Payment   Payment?
+  Shipping  Shipping?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  quantity  Int
+  unitPrice Float
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("orderitems")
+}
+
+model Payment {
+  id      Int    @id @default(autoincrement())
+  orderId Int    @unique
+  method  String
+  amount  Float
+  status  String
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("payments")
+}
+
+model Shipping {
+  id      Int    @id @default(autoincrement())
+  orderId Int    @unique
+  address String
+  status  String
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("shippings")
+}
+
+model Review {
+  id        Int     @id @default(autoincrement())
+  productId Int
+  userId    Int
+  rating    Int
+  comment   String
+  product   Product @relation(fields: [productId], references: [id])
+  user      User    @relation(fields: [userId], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("reviews")
+}
