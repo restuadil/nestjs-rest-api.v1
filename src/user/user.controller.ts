@@ -1,7 +1,15 @@
-import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { WebResponse } from 'src/model/web.model';
-import { UserResponse } from 'src/model/user.model';
+import { UserRegister, UserResponse } from 'src/model/user.model';
 
 @Controller('/api/users')
 export class UserController {
@@ -29,6 +37,15 @@ export class UserController {
     @Param('id', ParseIntPipe) id: number,
   ): Promise<WebResponse<UserResponse>> {
     const result = await this.userService.getById(id);
+    return {
+      data: result,
+    };
+  }
+  @Post()
+  async register(
+    @Body() data: UserRegister,
+  ): Promise<WebResponse<UserResponse>> {
+    const result = await this.userService.register(data);
     return {
       data: result,
     };

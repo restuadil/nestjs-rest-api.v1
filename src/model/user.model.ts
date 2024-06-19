@@ -7,3 +7,10 @@ export class UserResponse {
   created_at?: Date;
   updated_at?: Date;
 }
+
+export class UserRegister {
+  username: string;
+  email: string;
+  password: string;
+  address: string;
+}

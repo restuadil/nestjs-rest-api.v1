@@ -1,10 +1,11 @@
 import { HttpException, Inject, Injectable, Logger } from '@nestjs/common';
-import { Prisma, User } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { PrismaService } from 'src/common/prisma.service';
 import { ValidationService } from 'src/common/validation.service';
-import { UserResponse } from 'src/model/user.model';
+import { UserRegister, UserResponse } from 'src/model/user.model';
 import { Pagination, WebResponse } from 'src/model/web.model';
+import { UserValidation } from './user.validation';
 
 @Injectable()
 export class UserService {
@@ -35,14 +36,42 @@ export class UserService {
     };
     return { data: results, pagination: pagination };
   }
-  async getById(id: number): Promise<User> {
+  async getById(id: number): Promise<UserResponse> {
     const result = await this.prismaService.user.findFirst({
       where: { id: id },
     });
     if (!result) {
       throw new HttpException('User not found', 404);
     } else {
-      return result;
+      return {
+        username: result.username,
+        email: result.email,
+        address: result.address,
+      };
     }
+  }
+  async register(data: UserRegister): Promise<UserResponse> {
+    this.logger.debug(`Register new user ${JSON.stringify(data)}`);
+    const validatedUser: UserRegister = await this.validationService.validate(
+      UserValidation.REGISTER,
+      data,
+    );
+    const existingUser = await this.prismaService.user.count({
+      where: {
+        OR: [
+          { username: validatedUser.username },
+          { email: validatedUser.email },
+        ],
+      },
+    });
+
+    if (existingUser != 0) {
+      throw new HttpException('Username or Email already exists', 400);
+    }
+    const result = await this.prismaService.user.create({
+      data: validatedUser,
+    });
+
+    return result;
   }
 }
