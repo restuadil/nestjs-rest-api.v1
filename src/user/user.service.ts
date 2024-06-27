@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { PrismaService } from 'src/common/prisma.service';
 import { ValidationService } from 'src/common/validation.service';
-import { UserRegister, UserResponse } from 'src/model/user.model';
+import { UserResponse } from 'src/model/user.model';
 import { Pagination, WebResponse } from 'src/model/web.model';
 import { UserValidation } from './user.validation';
 
@@ -50,28 +50,43 @@ export class UserService {
       };
     }
   }
-  async register(data: UserRegister): Promise<UserResponse> {
-    this.logger.debug(`Register new user ${JSON.stringify(data)}`);
-    const validatedUser: UserRegister = await this.validationService.validate(
-      UserValidation.REGISTER,
+  async delete(id: number): Promise<UserResponse> {
+    const result = await this.prismaService.user.delete({
+      where: { id: id },
+    });
+    if (!result) {
+      throw new HttpException('User not found', 404);
+    } else {
+      return {
+        username: result.username,
+        email: result.email,
+        address: result.address,
+      };
+    }
+  }
+  async update(id: number, data: UserResponse) {
+    const updateData: UserResponse = this.validationService.validate(
+      UserValidation.UPDATE,
       data,
     );
-    const existingUser = await this.prismaService.user.count({
-      where: {
-        OR: [
-          { username: validatedUser.username },
-          { email: validatedUser.email },
-        ],
-      },
+    const existingUser = await this.prismaService.user.findFirst({
+      where: { username: updateData.username },
     });
-
-    if (existingUser != 0) {
-      throw new HttpException('Username or Email already exists', 400);
+    if (existingUser) {
+      throw new HttpException('Username already exists', 409);
     }
-    const result = await this.prismaService.user.create({
-      data: validatedUser,
+    const result = await this.prismaService.user.update({
+      where: { id: id },
+      data: updateData,
     });
-
-    return result;
+    if (!result) {
+      throw new HttpException('User not found', 404);
+    } else {
+      return {
+        username: result.username,
+        email: result.email,
+        address: result.address,
+      };
+    }
   }
 }

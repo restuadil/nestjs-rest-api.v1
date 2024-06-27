@@ -5,9 +5,11 @@ import { UserService } from './user/user.service';
 import { PrismaService } from './common/prisma.service';
 import { APP_FILTER } from '@nestjs/core';
 import { ZodExceptionFilter } from './common/error.filter';
+import { CategoryModule } from './category/category.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
-  imports: [UserModule, commonModule],
+  imports: [UserModule, commonModule, CategoryModule, AuthModule],
   controllers: [],
   providers: [
     UserService,

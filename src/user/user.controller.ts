@@ -1,15 +1,14 @@
 import {
-  Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
-  Post,
   Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { WebResponse } from 'src/model/web.model';
-import { UserRegister, UserResponse } from 'src/model/user.model';
+import { UserResponse } from 'src/model/user.model';
 
 @Controller('/api/users')
 export class UserController {
@@ -41,11 +40,10 @@ export class UserController {
       data: result,
     };
   }
-  @Post()
-  async register(
-    @Body() data: UserRegister,
-  ): Promise<WebResponse<UserResponse>> {
-    const result = await this.userService.register(data);
+
+  @Delete('/:id')
+  async delete(@Param('id', ParseIntPipe) id: number) {
+    const result = await this.userService.delete(id);
     return {
       data: result,
     };
